@@ -1,6 +1,7 @@
 from datetime import datetime
 from app.extensions import db
 from app.models.asiento import AsientoCuaderno
+from app.models.obra import Obra
 from app.models.respuesta import RespuestaAsiento
 from app.models.historial import HistorialCambio
 
@@ -12,8 +13,18 @@ class AsientoRepository:
         return AsientoCuaderno.query.get(asiento_id)
 
     @staticmethod
+    def get_by_id_with_lock(asiento_id: int):
+        return AsientoCuaderno.query.filter_by(id=asiento_id).with_for_update().first()
+
+    @staticmethod
     def get_by_qr(codigo_qr: str):
-        return AsientoCuaderno.query.filter_by(codigo_qr_verificacion=codigo_qr).first()
+        return AsientoCuaderno.query.filter_by(codigo_qr_verificacion=codigo_qr.strip()).first()
+
+    @staticmethod
+    def get_by_uuid(uuid_operacion: str):
+        if not uuid_operacion:
+            return None
+        return AsientoCuaderno.query.filter_by(uuid_operacion=uuid_operacion.strip()).first()
 
     @staticmethod
     def get_asientos_by_obra(id_obra: int, tipo: str = None, estado: str = None, id_frente: int = None, fecha_inicio = None, fecha_fin = None):
@@ -34,15 +45,19 @@ class AsientoRepository:
 
     @staticmethod
     def get_siguiente_correlativo_con_bloqueo(id_obra: int):
-        """Obtiene el correlativo siguiente mediante bloqueo pesimista para evitar colisiones."""
+        """Bloquea la fila de la obra para serializar el cálculo del correlativo y evitar colisiones concurrentes."""
+        obra = Obra.query.filter_by(id=id_obra).with_for_update().first()
+        if not obra:
+            return None, "Obra no encontrada"
+
         ultimo = (
             AsientoCuaderno.query
             .filter_by(id_obra=id_obra)
             .order_by(AsientoCuaderno.numero_correlativo.desc())
-            .with_for_update()
             .first()
         )
-        return (ultimo.numero_correlativo + 1) if ultimo else 1
+        siguiente = (ultimo.numero_correlativo + 1) if ultimo else 1
+        return siguiente, obra
 
     @staticmethod
     def create_asiento(asiento: AsientoCuaderno, comentario_inicial: str = None):
@@ -72,7 +87,7 @@ class AsientoRepository:
             id_asiento=asiento.id,
             estado_anterior=estado_previo,
             estado_nuevo=nuevo_estado,
-            comentario=f'Absolución formal registrada por supervisor: {respuesta.descripcion[:100]}...',
+            comentario=f'Respuesta formal del supervisor: {respuesta.descripcion}',
             id_usuario=respuesta.id_supervisor,
             fecha=datetime.utcnow()
         )
@@ -82,4 +97,6 @@ class AsientoRepository:
 
     @staticmethod
     def get_historial(id_asiento: int):
-        return HistorialCambio.query.filter_by(id_asiento=id_asiento).order_by(HistorialCambio.fecha.asc()).all()
+        return HistorialCambio.query.filter_by(id_asiento=id_asiento).order_by(
+            HistorialCambio.fecha.asc(), HistorialCambio.id.asc()
+        ).all()

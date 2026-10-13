@@ -62,11 +62,14 @@ CREATE TABLE IF NOT EXISTS `asientos_cuaderno` (
     `estado` VARCHAR(50) NOT NULL DEFAULT 'Emitido', -- 'Emitido', 'Pendiente de Absolución', 'Absuelto', 'Observado', 'Concluido'
     `codigo_qr_verificacion` VARCHAR(100) NULL UNIQUE,
     `id_usuario` INT NOT NULL,
+    `uuid_operacion` VARCHAR(64) NULL UNIQUE,
     FOREIGN KEY (`id_obra`) REFERENCES `obras`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`id_frente`) REFERENCES `frentes_obra`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`id_usuario`) REFERENCES `usuarios`(`id`) ON DELETE RESTRICT,
+    UNIQUE KEY `uq_obra_correlativo` (`id_obra`, `numero_correlativo`),
     INDEX `idx_asiento_obra_correlativo` (`id_obra`, `numero_correlativo`),
-    INDEX `idx_asiento_qr` (`codigo_qr_verificacion`)
+    INDEX `idx_asiento_qr` (`codigo_qr_verificacion`),
+    INDEX `idx_asiento_uuid` (`uuid_operacion`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. TABLA: respuestas_asiento

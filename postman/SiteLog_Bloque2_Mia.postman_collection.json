@@ -1,0 +1,1219 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-sitelogmia0002",
+    "name": "SiteLog - Bloque 2 (Mia: Asientos y QR)",
+    "description": "Endpoints del Bloque 2. Ejecutar la carpeta 0 (Login) y luego el resto en orden con el Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Login (ejecutar primero)",
+      "item": [
+        {
+          "name": "POST Login - Residente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Guarda el token en {{token_residente}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"correo\": \"residente@sitelog.pe\",\n    \"password\": \"residente123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.collectionVariables.set(\"token_residente\", j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Login - Supervisor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Guarda el token en {{token_supervisor}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"correo\": \"supervisor@sitelog.pe\",\n    \"password\": \"supervisor123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.collectionVariables.set(\"token_supervisor\", j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Login - Administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Guarda el token en {{token_admin}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"correo\": \"admin@sitelog.pe\",\n    \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.collectionVariables.set(\"token_admin\", j.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. POST /asientos (Residente)",
+      "item": [
+        {
+          "name": "Registrar asiento - OK 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "Crea una Consulta dentro del radio de 50 m. Guarda {{asiento_id}} y {{codigo_qr}}.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\",\n    \"tipo\": \"Consulta\",\n    \"titulo\": \"Consulta sobre interferencia de red\",\n    \"descripcion\": \"Se halló tubería no contemplada en el expediente técnico.\",\n    \"lat_registro\": -6.77138,\n    \"lon_registro\": -79.84089,\n    \"uuid_operacion\": \"{{uuid_op}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uuid_op\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.test(\"Correlativo y QR generados\", function(){ pm.expect(j.asiento.numero_correlativo).to.be.a(\"number\"); pm.expect(j.asiento.codigo_qr_verificacion).to.include(\"SITELOG-\"); });",
+                  "pm.collectionVariables.set(\"asiento_id\", j.asiento.id);",
+                  "pm.collectionVariables.set(\"codigo_qr\", j.asiento.codigo_qr_verificacion);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mismo uuid_operacion - 409 (idempotencia offline)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "Reenvía la misma operación: no duplica el asiento.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\",\n    \"tipo\": \"Consulta\",\n    \"titulo\": \"Consulta sobre interferencia de red\",\n    \"descripcion\": \"Se halló tubería no contemplada en el expediente técnico.\",\n    \"lat_registro\": -6.77138,\n    \"lon_registro\": -79.84089,\n    \"uuid_operacion\": \"{{uuid_op}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });",
+                  "pm.test(\"Devuelve el asiento original\", function(){ pm.expect(j.asiento.id).to.eql(parseInt(pm.collectionVariables.get(\"asiento_id\"))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fuera del radio de obra - 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "Coordenadas a varios km de la obra.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\",\n    \"tipo\": \"Consulta\",\n    \"titulo\": \"Consulta sobre interferencia de red\",\n    \"descripcion\": \"Se halló tubería no contemplada en el expediente técnico.\",\n    \"lat_registro\": -6.8,\n    \"lon_registro\": -79.9,\n    \"uuid_operacion\": \"{{uuid_x}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uuid_x\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Faltan campos obligatorios - 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tipo inválido - 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\",\n    \"tipo\": \"Otro\",\n    \"titulo\": \"Consulta sobre interferencia de red\",\n    \"descripcion\": \"Se halló tubería no contemplada en el expediente técnico.\",\n    \"lat_registro\": -6.77138,\n    \"lon_registro\": -79.84089,\n    \"uuid_operacion\": \"{{uuid_y}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uuid_y\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obra inexistente - 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": 99999,\n    \"tipo\": \"Consulta\",\n    \"titulo\": \"Consulta sobre interferencia de red\",\n    \"descripcion\": \"Se halló tubería no contemplada en el expediente técnico.\",\n    \"lat_registro\": -6.77138,\n    \"lon_registro\": -79.84089,\n    \"uuid_operacion\": \"{{uuid_z}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uuid_z\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supervisor no puede crear - 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\",\n    \"tipo\": \"Consulta\",\n    \"titulo\": \"Consulta sobre interferencia de red\",\n    \"descripcion\": \"Se halló tubería no contemplada en el expediente técnico.\",\n    \"lat_registro\": -6.77138,\n    \"lon_registro\": -79.84089,\n    \"uuid_operacion\": \"{{uuid_w}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uuid_w\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 403\", function () { pm.response.to.have.status(403); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token - 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\",\n    \"tipo\": \"Consulta\",\n    \"titulo\": \"Consulta sobre interferencia de red\",\n    \"descripcion\": \"Se halló tubería no contemplada en el expediente técnico.\",\n    \"lat_registro\": -6.77138,\n    \"lon_registro\": -79.84089,\n    \"uuid_operacion\": \"{{uuid_v}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uuid_v\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 401\", function () { pm.response.to.have.status(401); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. GET /asientos/{id}",
+      "item": [
+        {
+          "name": "Detalle del asiento - 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.test(\"Trae respuestas, incidencias y evidencias\", function(){ pm.expect(j.asiento).to.have.property(\"respuestas\"); pm.expect(j.asiento).to.have.property(\"incidencias\"); pm.expect(j.asiento).to.have.property(\"evidencias\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Asiento inexistente - 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/99999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "99999"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token - 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 401\", function () { pm.response.to.have.status(401); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. POST /asientos/{id}/responder (Supervisor)",
+      "item": [
+        {
+          "name": "Absolver consulta - 200",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/responder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "responder"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"descripcion\": \"Se absuelve: la tubería será reubicada por la entidad.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.test(\"Estado Absuelto\", function(){ pm.expect(j.asiento.estado).to.eql(\"Absuelto\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Absolver otra vez - 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/responder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "responder"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"descripcion\": \"Otra respuesta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin descripción - 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/responder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "responder"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estado inválido - 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/responder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "responder"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"descripcion\": \"x\",\n    \"estado\": \"Emitido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Residente no puede responder - 403",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/responder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "responder"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"descripcion\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 403\", function () { pm.response.to.have.status(403); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Asiento inexistente - 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/99999/responder",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "99999",
+                "responder"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"descripcion\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. GET /asientos/{id}/historial",
+      "item": [
+        {
+          "name": "Historial del asiento - 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/historial",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "historial"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.test(\"Al menos 2 cambios de estado\", function(){ pm.expect(j.historial.length).to.be.at.least(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Asiento inexistente - 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_admin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/99999/historial",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "99999",
+                "historial"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y mensaje de error\", function () { pm.expect(j.success).to.eql(false); pm.expect(j.error).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. GET /asientos/verificar/{codigo_qr} (público)",
+      "item": [
+        {
+          "name": "QR válido (sin token) - 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/asientos/verificar/{{codigo_qr}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "verificar",
+                "{{codigo_qr}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.test(\"valido = true\", function(){ pm.expect(j.valido).to.eql(true); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "QR falso - 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/asientos/verificar/SITELOG-FALSO-000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "verificar",
+                "SITELOG-FALSO-000"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 404\", function () { pm.response.to.have.status(404); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"valido = false\", function(){ pm.expect(j.valido).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "id_obra",
+      "value": "1"
+    },
+    {
+      "key": "token_residente",
+      "value": ""
+    },
+    {
+      "key": "token_supervisor",
+      "value": ""
+    },
+    {
+      "key": "token_admin",
+      "value": ""
+    },
+    {
+      "key": "asiento_id",
+      "value": ""
+    },
+    {
+      "key": "codigo_qr",
+      "value": ""
+    },
+    {
+      "key": "uuid_op",
+      "value": ""
+    }
+  ]
+}

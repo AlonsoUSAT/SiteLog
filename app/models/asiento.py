@@ -3,6 +3,9 @@ from app.extensions import db
 
 class AsientoCuaderno(db.Model):
     __tablename__ = 'asientos_cuaderno'
+    __table_args__ = (
+        db.UniqueConstraint('id_obra', 'numero_correlativo', name='uq_obra_correlativo'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_obra = db.Column(db.Integer, db.ForeignKey('obras.id'), nullable=False, index=True)
@@ -17,6 +20,8 @@ class AsientoCuaderno(db.Model):
     estado = db.Column(db.String(50), default='Emitido', nullable=False)  # 'Emitido', 'Pendiente de Absolución', 'Absuelto', 'Observado', 'Concluido'
     codigo_qr_verificacion = db.Column(db.String(100), unique=True, nullable=True, index=True)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    # UUID generado por el cliente Android (operación offline) para evitar duplicados al reintentar
+    uuid_operacion = db.Column(db.String(64), unique=True, nullable=True, index=True)
 
     # Relaciones
     usuario = db.relationship('Usuario', backref='asientos_registrados')
@@ -41,7 +46,8 @@ class AsientoCuaderno(db.Model):
             'estado': self.estado,
             'codigo_qr_verificacion': self.codigo_qr_verificacion,
             'id_usuario': self.id_usuario,
-            'usuario_nombre': self.usuario.nombre if self.usuario else None
+            'usuario_nombre': self.usuario.nombre if self.usuario else None,
+            'uuid_operacion': self.uuid_operacion
         }
         if include_details:
             data['respuestas'] = [r.to_dict() for r in self.respuestas]

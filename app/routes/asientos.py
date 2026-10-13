@@ -1,42 +1,54 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.decorators import role_required
+from app.utils.decorators import role_required, get_current_user
 from app.services.asiento_service import AsientoService
 from app.services.incidencia_service import IncidenciaService
 
 asientos_bp = Blueprint('asientos', __name__, url_prefix='/asientos')
 
+
+# ---------------------------------------------------------------------------
+# 1. POST /asientos
+# ---------------------------------------------------------------------------
 @asientos_bp.route('', methods=['POST'])
 @jwt_required()
 @role_required(['Residente', 'Administrador'])
 def registrar_asiento():
     """
     POST /asientos
-    Capa Route: Registra nuevo asiento correlativo y genera QR mediante AsientoService.
+    Capa Route: Registra nuevo asiento con validación de proximidad y correlativo transaccional.
+    Idempotencia offline: 409 con el asiento original si se repite 'uuid_operacion'.
     """
-    user_id = int(get_jwt_identity())
+    usuario = get_current_user()
     data = request.get_json(silent=True) or {}
 
-    success, message, status_code, asiento_data = AsientoService.registrar_asiento(user_id, data)
+    success, message, status_code, result_data = AsientoService.registrar_asiento(usuario, data)
 
     if not success:
-        return jsonify({'success': False, 'error': message}), status_code
+        resp = {'success': False, 'error': message}
+        if status_code == 409 and result_data:
+            resp['asiento'] = result_data
+        return jsonify(resp), status_code
 
     return jsonify({
         'success': True,
         'message': message,
-        'asiento': asiento_data
+        'asiento': result_data
     }), status_code
 
 
+# ---------------------------------------------------------------------------
+# 2. GET /asientos/<id>
+# ---------------------------------------------------------------------------
 @asientos_bp.route('/<int:id>', methods=['GET'])
 @jwt_required()
 def detalle_asiento(id):
     """
     GET /asientos/<id>
-    Capa Route: Detalle completo del asiento delegando a AsientoService.
+    Capa Route: Detalle completo del asiento incluyendo respuestas, incidencias y evidencias.
     """
-    success, error_msg, status_code, data = AsientoService.obtener_detalle(id)
+    usuario = get_current_user()
+    success, error_msg, status_code, data = AsientoService.obtener_detalle(id, usuario)
 
     if not success:
         return jsonify({'success': False, 'error': error_msg}), status_code
@@ -47,6 +59,9 @@ def detalle_asiento(id):
     }), 200
 
 
+# ---------------------------------------------------------------------------
+# 3. POST /asientos/<id>/responder
+# ---------------------------------------------------------------------------
 @asientos_bp.route('/<int:id>/responder', methods=['POST'])
 @jwt_required()
 @role_required(['Supervisor', 'Administrador'])
@@ -55,14 +70,14 @@ def responder_asiento(id):
     POST /asientos/<id>/responder
     Capa Route: Absolución formal del supervisor delegando a AsientoService.
     """
-    user_id = int(get_jwt_identity())
+    usuario = get_current_user()
     data = request.get_json(silent=True) or {}
     descripcion = data.get('descripcion', '')
     nuevo_estado = data.get('estado', 'Absuelto')
 
     success, message, status_code, asiento_data = AsientoService.responder_asiento(
         asiento_id=id,
-        user_id=user_id,
+        usuario=usuario,
         descripcion=descripcion,
         nuevo_estado=nuevo_estado
     )
@@ -77,6 +92,9 @@ def responder_asiento(id):
     }), status_code
 
 
+# ---------------------------------------------------------------------------
+# (Bloque de Dana) POST /asientos/<id>/incidencias
+# ---------------------------------------------------------------------------
 @asientos_bp.route('/<int:id>/incidencias', methods=['POST'])
 @jwt_required()
 @role_required(['Residente', 'Supervisor', 'Administrador'])
@@ -121,14 +139,18 @@ def registrar_incidencia(id):
     }), status_code
 
 
+# ---------------------------------------------------------------------------
+# 5. GET /asientos/<id>/historial
+# ---------------------------------------------------------------------------
 @asientos_bp.route('/<int:id>/historial', methods=['GET'])
 @jwt_required()
 def historial_asiento(id):
     """
     GET /asientos/<id>/historial
-    Capa Route: Trazabilidad cronológica de cambios delegando a AsientoService.
+    Capa Route: Trazabilidad cronológica de cambios y auditoría contractual del asiento.
     """
-    success, error_msg, status_code, historial = AsientoService.obtener_historial(id)
+    usuario = get_current_user()
+    success, error_msg, status_code, historial = AsientoService.obtener_historial(id, usuario)
 
     if not success:
         return jsonify({'success': False, 'error': error_msg}), status_code
@@ -140,6 +162,9 @@ def historial_asiento(id):
     }), 200
 
 
+# ---------------------------------------------------------------------------
+# 4. GET /asientos/verificar/<codigo_qr> (Público)
+# ---------------------------------------------------------------------------
 @asientos_bp.route('/verificar/<string:codigo_qr>', methods=['GET'])
 def verificar_codigo_qr(codigo_qr):
     """
