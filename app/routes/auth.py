@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from app.extensions import db
-from app.models.usuario import Usuario
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.services.auth_service import AuthService
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -9,65 +8,23 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 def login():
     """
     POST /auth/login
-    Público: Autentica al usuario y devuelve el JWT junto con id, nombre y rol.
+    Capa Route: Recibe credenciales y delega la autenticación y generación de JWT a AuthService.
     """
     data = request.get_json(silent=True) or {}
-    correo = data.get('correo', '').strip().lower()
-    password = data.get('password', '').strip()
+    correo = data.get('correo', '')
+    password = data.get('password', '')
 
-    if not correo or not password:
-        return jsonify({
-            'success': False,
-            'error': 'Correo y contraseña son obligatorios'
-        }), 400
+    success, message, status_code, result_data = AuthService.login(correo, password)
 
-    usuario = Usuario.query.filter_by(correo=correo).first()
+    if not success:
+        return jsonify({'success': False, 'error': message}), status_code
 
-    if not usuario or not usuario.check_password(password):
-        return jsonify({
-            'success': False,
-            'error': 'Credenciales inválidas'
-        }), 401
-
-    if not usuario.activo:
-        return jsonify({
-            'success': False,
-            'error': 'Usuario inactivo. Contacte al administrador.'
-        }), 403
-
-    # Generar token JWT con el id del usuario como identidad y claims con id, nombre y rol
-    access_token = create_access_token(
-        identity=str(usuario.id),
-        additional_claims={
-            'id': usuario.id,
-            'nombre': usuario.nombre,
-            'rol': usuario.rol,
-            'correo': usuario.correo
-        }
-    )
-
-    user_payload = {
-        'id': usuario.id,
-        'nombre': usuario.nombre,
-        'correo': usuario.correo,
-        'rol': usuario.rol,
-        'colegiatura': usuario.colegiatura,
-        'token': access_token
-    }
-
-    return jsonify({
+    response = {
         'success': True,
-        'message': 'Autenticación exitosa',
-        'token': access_token,
-        'access_token': access_token,
-        'id': usuario.id,
-        'nombre': usuario.nombre,
-        'rol': usuario.rol,
-        'correo': usuario.correo,
-        'colegiatura': usuario.colegiatura,
-        'data': user_payload,
-        'usuario': user_payload
-    }), 200
+        'message': message
+    }
+    response.update(result_data)
+    return jsonify(response), status_code
 
 
 @auth_bp.route('/fcm-token', methods=['POST'])
@@ -75,20 +32,15 @@ def login():
 def update_fcm_token():
     """
     POST /auth/fcm-token
-    Autenticado: Registra o actualiza el token de FCM del dispositivo.
+    Capa Route: Registra o actualiza el token FCM delegando a AuthService.
     """
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json(silent=True) or {}
-    fcm_token = data.get('fcm_token', '').strip()
+    fcm_token = data.get('fcm_token', '')
 
-    usuario = Usuario.query.get(user_id)
-    if not usuario:
-        return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
+    success, message, status_code = AuthService.actualizar_fcm_token(user_id, fcm_token)
 
-    usuario.fcm_token = fcm_token if fcm_token else None
-    db.session.commit()
+    if not success:
+        return jsonify({'success': False, 'error': message}), status_code
 
-    return jsonify({
-        'success': True,
-        'message': 'Token FCM actualizado correctamente'
-    }), 200
+    return jsonify({'success': True, 'message': message}), status_code

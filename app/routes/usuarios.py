@@ -1,10 +1,9 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
-from app.models.usuario import Usuario
 from app.utils.decorators import role_required
+from app.services.supervision_service import SupervisionService
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
-
 
 @usuarios_bp.route('/residentes', methods=['GET'])
 @jwt_required()
@@ -12,18 +11,15 @@ usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 def listar_residentes():
     """
     GET /usuarios/residentes
-    Lista profesionales residentes de obra activos para asignación a contratos.
+    Capa Route: Lista ingenieros residentes activos delegando a SupervisionService.
     """
-    try:
-        residentes = Usuario.query.filter_by(rol='Residente', activo=True).all()
-        return jsonify({
-            'success': True,
-            'count': len(residentes),
-            'residentes': [r.to_dict() for r in residentes]
-        }), 200
+    success, error_msg, status_code, residentes = SupervisionService.listar_residentes()
 
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': f'Error al consultar residentes: {str(e)}'
-        }), 500
+    if not success:
+        return jsonify({'success': False, 'error': error_msg}), status_code
+
+    return jsonify({
+        'success': True,
+        'count': len(residentes),
+        'residentes': residentes
+    }), 200

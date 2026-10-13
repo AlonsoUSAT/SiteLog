@@ -1,39 +1,28 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
-from app.extensions import db
-from app.models.incidencia import IncidenciaObra
 from app.utils.decorators import role_required
+from app.services.incidencia_service import IncidenciaService
 
 incidencias_bp = Blueprint('incidencias', __name__, url_prefix='/incidencias')
-
 
 @incidencias_bp.route('', methods=['GET'])
 @jwt_required()
 def listar_incidencias():
     """
     GET /incidencias
-    Lista todas las incidencias registradas, con filtro opcional por id_asiento.
+    Capa Route: Lista incidencias con filtro opcional por id_asiento delegando a IncidenciaService.
     """
-    try:
-        id_asiento = request.args.get('id_asiento', type=int)
-        query = IncidenciaObra.query
+    id_asiento = request.args.get('id_asiento', type=int)
+    success, error_msg, status_code, incidencias = IncidenciaService.listar(id_asiento=id_asiento)
 
-        if id_asiento is not None:
-            query = query.filter_by(id_asiento=id_asiento)
+    if not success:
+        return jsonify({'success': False, 'error': error_msg}), status_code
 
-        incidencias = query.order_by(IncidenciaObra.fecha_registro.desc()).all()
-
-        return jsonify({
-            'success': True,
-            'count': len(incidencias),
-            'incidencias': [inc.to_dict(include_evidencias=True) for inc in incidencias]
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': f'Error al consultar incidencias: {str(e)}'
-        }), 500
+    return jsonify({
+        'success': True,
+        'count': len(incidencias),
+        'incidencias': incidencias
+    }), 200
 
 
 @incidencias_bp.route('/<int:id>', methods=['GET'])
@@ -41,23 +30,17 @@ def listar_incidencias():
 def detalle_incidencia(id):
     """
     GET /incidencias/<id>
-    Detalle completo de una incidencia técnica con sus evidencias asociadas.
+    Capa Route: Detalle completo de incidencia con evidencias delegando a IncidenciaService.
     """
-    try:
-        incidencia = IncidenciaObra.query.get(id)
-        if not incidencia:
-            return jsonify({'success': False, 'error': 'Incidencia no encontrada'}), 404
+    success, error_msg, status_code, incidencia = IncidenciaService.obtener_detalle(id)
 
-        return jsonify({
-            'success': True,
-            'incidencia': incidencia.to_dict(include_evidencias=True)
-        }), 200
+    if not success:
+        return jsonify({'success': False, 'error': error_msg}), status_code
 
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': f'Error al obtener detalle de la incidencia: {str(e)}'
-        }), 500
+    return jsonify({
+        'success': True,
+        'incidencia': incidencia
+    }), 200
 
 
 @incidencias_bp.route('/<int:id>/estado', methods=['PUT'])
@@ -66,42 +49,25 @@ def detalle_incidencia(id):
 def actualizar_estado_incidencia(id):
     """
     PUT /incidencias/<id>/estado
-    Permite al supervisor actualizar o agregar una observación/impacto a la incidencia técnica.
+    Capa Route: Actualización de estado y observaciones de supervisión delegando a IncidenciaService.
     """
-    try:
-        incidencia = IncidenciaObra.query.get(id)
-        if not incidencia:
-            return jsonify({'success': False, 'error': 'Incidencia no encontrada'}), 404
+    data = request.get_json(silent=True) or {}
+    observacion = data.get('observacion', '')
+    impacto = data.get('impacto_contractual')
+    tipo = data.get('tipo_incidencia')
 
-        data = request.get_json(silent=True) or {}
-        observacion = data.get('observacion', '').strip()
-        impacto_actualizado = data.get('impacto_contractual')
-        tipo_actualizado = data.get('tipo_incidencia')
+    success, message, status_code, inc_data = IncidenciaService.actualizar_estado(
+        incidencia_id=id,
+        observacion=observacion,
+        impacto=impacto,
+        tipo=tipo
+    )
 
-        if not any([observacion, impacto_actualizado, tipo_actualizado]):
-            return jsonify({
-                'success': False,
-                'error': 'Debe proporcionar al menos un campo para actualizar: observacion, impacto_contractual o tipo_incidencia'
-            }), 400
+    if not success:
+        return jsonify({'success': False, 'error': message}), status_code
 
-        if impacto_actualizado:
-            incidencia.impacto_contractual = impacto_actualizado.strip()
-        if tipo_actualizado:
-            incidencia.tipo_incidencia = tipo_actualizado.strip()
-        if observacion:
-            incidencia.descripcion = f"{incidencia.descripcion} [Obs. Supervisor: {observacion}]"
-
-        db.session.commit()
-
-        return jsonify({
-            'success': True,
-            'message': 'Incidencia actualizada correctamente',
-            'incidencia': incidencia.to_dict(include_evidencias=True)
-        }), 200
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': f'Error al actualizar incidencia: {str(e)}'
-        }), 500
+    return jsonify({
+        'success': True,
+        'message': message,
+        'incidencia': inc_data
+    }), status_code

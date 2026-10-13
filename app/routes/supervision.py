@@ -1,12 +1,9 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
-from app.models.asiento import AsientoCuaderno
-from app.models.incidencia import IncidenciaObra
-from app.models.obra import Obra
 from app.utils.decorators import role_required
+from app.services.supervision_service import SupervisionService
 
 supervision_bp = Blueprint('supervision', __name__, url_prefix='/supervision')
-
 
 @supervision_bp.route('/kpis-contractuales', methods=['GET'])
 @jwt_required()
@@ -14,49 +11,14 @@ supervision_bp = Blueprint('supervision', __name__, url_prefix='/supervision')
 def kpis_contractuales():
     """
     GET /supervision/kpis-contractuales
-    KPIs para panel de supervisión y monitoreo contractual:
-    - Total de obras y desglose por estado
-    - Consultas pendientes de absolución
-    - Asientos emitidos, absueltos y observados
-    - Incidencias técnicas registradas
+    Capa Route: Devuelve KPIs consolidados delegando a SupervisionService.
     """
-    try:
-        total_obras = Obra.query.count()
-        obras_en_ejecucion = Obra.query.filter_by(estado='En ejecución').count()
-        obras_con_observaciones = Obra.query.filter_by(estado='Con observaciones').count()
-        obras_paralizadas = Obra.query.filter_by(estado='Paralizada').count()
-        obras_concluidas = Obra.query.filter_by(estado='Concluida').count()
+    success, error_msg, status_code, kpis = SupervisionService.obtener_kpis()
 
-        consultas_pendientes = AsientoCuaderno.query.filter_by(
-            tipo='Consulta', estado='Pendiente de Absolución'
-        ).count()
+    if not success:
+        return jsonify({'success': False, 'error': error_msg}), status_code
 
-        asientos_emitidos = AsientoCuaderno.query.filter_by(estado='Emitido').count()
-        asientos_absueltos = AsientoCuaderno.query.filter_by(estado='Absuelto').count()
-        asientos_observados = AsientoCuaderno.query.filter_by(estado='Observado').count()
-        total_asientos = AsientoCuaderno.query.count()
-
-        total_incidencias = IncidenciaObra.query.count()
-
-        return jsonify({
-            'success': True,
-            'kpis': {
-                'total_obras': total_obras,
-                'obras_en_ejecucion': obras_en_ejecucion,
-                'obras_con_observaciones': obras_con_observaciones,
-                'obras_paralizadas': obras_paralizadas,
-                'obras_concluidas': obras_concluidas,
-                'total_asientos': total_asientos,
-                'consultas_pendientes': consultas_pendientes,
-                'asientos_emitidos': asientos_emitidos,
-                'asientos_absueltos': asientos_absueltos,
-                'asientos_observados': asientos_observados,
-                'total_incidencias': total_incidencias
-            }
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': f'Error al calcular KPIs contractuales: {str(e)}'
-        }), 500
+    return jsonify({
+        'success': True,
+        'kpis': kpis
+    }), 200
