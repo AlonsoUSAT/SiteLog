@@ -4,7 +4,7 @@ from app.models.asiento import AsientoCuaderno
 from app.models.incidencia import IncidenciaObra
 
 class ObraRepository:
-    """Capa de acceso a datos para la entidad Obra."""
+    """Capa de acceso a datos para la entidad Obra y métricas por estado oficial."""
 
     @staticmethod
     def get_by_id(obra_id: int):
@@ -30,11 +30,18 @@ class ObraRepository:
     @staticmethod
     def get_metricas_resumen(obra_id: int):
         total_asientos = AsientoCuaderno.query.filter_by(id_obra=obra_id).count()
-        asientos_emitidos = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='Emitido').count()
-        asientos_pendientes = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='Pendiente de Absolución').count()
-        asientos_absueltos = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='Absuelto').count()
-        asientos_observados = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='Observado').count()
-        asientos_concluidos = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='Concluido').count()
+        asientos_emitidos = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='EMITIDO').count()
+        asientos_observados = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='OBSERVADO').count()
+        asientos_absueltos = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='ABSUELTO').count()
+        asientos_concluidos = AsientoCuaderno.query.filter_by(id_obra=obra_id, estado='CONCLUIDO').count()
+
+        # Filtro calculado: Consultas EMITIDO sin respuesta
+        consultas_pendientes = AsientoCuaderno.query.filter(
+            AsientoCuaderno.id_obra == obra_id,
+            AsientoCuaderno.tipo == 'Consulta',
+            AsientoCuaderno.estado == 'EMITIDO',
+            ~AsientoCuaderno.respuestas.any()
+        ).count()
 
         total_incidencias = (
             IncidenciaObra.query
@@ -46,9 +53,9 @@ class ObraRepository:
         return {
             'total_asientos': total_asientos,
             'asientos_emitidos': asientos_emitidos,
-            'asientos_pendientes': asientos_pendientes,
-            'asientos_absueltos': asientos_absueltos,
             'asientos_observados': asientos_observados,
+            'asientos_absueltos': asientos_absueltos,
             'asientos_concluidos': asientos_concluidos,
+            'consultas_pendientes': consultas_pendientes,
             'total_incidencias': total_incidencias
         }

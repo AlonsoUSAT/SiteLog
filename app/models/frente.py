@@ -8,6 +8,7 @@ class FrenteObra(db.Model):
     nombre_sector = db.Column(db.String(100), nullable=False)
     latitud = db.Column(db.Float, nullable=False)
     longitud = db.Column(db.Float, nullable=False)
+    radio_metros = db.Column(db.Float, default=50.0, nullable=False)
 
     asientos = db.relationship('AsientoCuaderno', backref='frente', lazy='dynamic')
 
@@ -17,7 +18,8 @@ class FrenteObra(db.Model):
             'id_obra': self.id_obra,
             'nombre_sector': self.nombre_sector,
             'latitud': self.latitud,
-            'longitud': self.longitud
+            'longitud': self.longitud,
+            'radio_metros': self.radio_metros
         }
 
     def __repr__(self):

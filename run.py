@@ -119,10 +119,10 @@ def seed_db():
             db.session.flush()
 
             frentes_obra1 = [
-                FrenteObra(id_obra=obra1.id, nombre_sector='Sector A: Intersección Av. Bolognesi', latitud=-6.77100, longitud=-79.84050),
-                FrenteObra(id_obra=obra1.id, nombre_sector='Sector B: Tramo Plaza Principal', latitud=-6.77140, longitud=-79.84090),
-                FrenteObra(id_obra=obra1.id, nombre_sector='Sector C: Tramo Mercado Central', latitud=-6.77180, longitud=-79.84120),
-                FrenteObra(id_obra=obra1.id, nombre_sector='Sector D: Cruce Pedro Ruiz', latitud=-6.77220, longitud=-79.84160),
+                FrenteObra(id_obra=obra1.id, nombre_sector='Sector A: Intersección Av. Bolognesi', latitud=-6.77100, longitud=-79.84050, radio_metros=50.0),
+                FrenteObra(id_obra=obra1.id, nombre_sector='Sector B: Tramo Plaza Principal', latitud=-6.77140, longitud=-79.84090, radio_metros=50.0),
+                FrenteObra(id_obra=obra1.id, nombre_sector='Sector C: Tramo Mercado Central', latitud=-6.77180, longitud=-79.84120, radio_metros=50.0),
+                FrenteObra(id_obra=obra1.id, nombre_sector='Sector D: Cruce Pedro Ruiz', latitud=-6.77220, longitud=-79.84160, radio_metros=50.0),
             ]
             db.session.add_all(frentes_obra1)
             db.session.flush()
@@ -143,18 +143,19 @@ def seed_db():
             db.session.flush()
 
             frentes_obra2 = [
-                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 1: Emergencia y Triaje', latitud=-6.83710, longitud=-79.93400),
-                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 2: Consulta Externa', latitud=-6.83725, longitud=-79.93415),
-                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 3: Hospitalización y Quirófano', latitud=-6.83740, longitud=-79.93430),
-                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 4: Subestación Eléctrica y Almacén', latitud=-6.83755, longitud=-79.93445),
+                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 1: Emergencia y Triaje', latitud=-6.83710, longitud=-79.93400, radio_metros=50.0),
+                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 2: Consulta Externa', latitud=-6.83725, longitud=-79.93415, radio_metros=50.0),
+                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 3: Hospitalización y Quirófano', latitud=-6.83740, longitud=-79.93430, radio_metros=50.0),
+                FrenteObra(id_obra=obra2.id, nombre_sector='Módulo 4: Subestación Eléctrica y Almacén', latitud=-6.83755, longitud=-79.93445, radio_metros=50.0),
             ]
             db.session.add_all(frentes_obra2)
             db.session.flush()
 
-        # 4. TABLA: asientos_cuaderno (4 tipos y varios estados)
+        # 4. TABLA: asientos_cuaderno (4 tipos y 5 estados oficiales v2)
         if AsientoCuaderno.query.count() == 0:
             frente_a = FrenteObra.query.filter_by(id_obra=obra1.id).first()
             frente_m1 = FrenteObra.query.filter_by(id_obra=obra2.id).first()
+            now = datetime.utcnow()
 
             asiento1 = AsientoCuaderno(
                 id_obra=obra1.id,
@@ -165,10 +166,18 @@ def seed_db():
                 descripcion='Se deja constancia del inicio oficial de partidas preliminares en el Sector A con presencia del Residente y Supervisión.',
                 lat_registro=-6.77100,
                 lon_registro=-79.84050,
-                estado='Absuelto',
+                accuracy_registro=10.5,
+                fecha_registro=now,
+                estado='CONCLUIDO',
                 codigo_qr_verificacion='SITELOG-OBRA1-AS1-DEMO0001CERT',
                 id_usuario=u_res.id
             )
+            asiento1.hash_contenido = AsientoCuaderno.calcular_hash(
+                asiento1.id_obra, asiento1.numero_correlativo, asiento1.tipo,
+                asiento1.titulo, asiento1.descripcion, asiento1.lat_registro,
+                asiento1.lon_registro, asiento1.fecha_registro, asiento1.id_usuario
+            )
+
             asiento2 = AsientoCuaderno(
                 id_obra=obra1.id,
                 id_frente=frente_a.id,
@@ -178,10 +187,18 @@ def seed_db():
                 descripcion='Durante la excavación de subrasante a -1.20m se halló tubería PVC no contemplada en el expediente técnico. Se solicita absolución.',
                 lat_registro=-6.77138,
                 lon_registro=-79.84089,
-                estado='Pendiente de Absolución',
+                accuracy_registro=12.0,
+                fecha_registro=now,
+                estado='EMITIDO',
                 codigo_qr_verificacion='SITELOG-OBRA1-AS2-DEMO0002CERT',
                 id_usuario=u_res.id
             )
+            asiento2.hash_contenido = AsientoCuaderno.calcular_hash(
+                asiento2.id_obra, asiento2.numero_correlativo, asiento2.tipo,
+                asiento2.titulo, asiento2.descripcion, asiento2.lat_registro,
+                asiento2.lon_registro, asiento2.fecha_registro, asiento2.id_usuario
+            )
+
             asiento3 = AsientoCuaderno(
                 id_obra=obra2.id,
                 id_frente=frente_m1.id,
@@ -191,10 +208,18 @@ def seed_db():
                 descripcion='La supervisión observa deficiente hidratación en elementos estructurales vaciados el día anterior.',
                 lat_registro=-6.83710,
                 lon_registro=-79.93400,
-                estado='Observado',
+                accuracy_registro=14.0,
+                fecha_registro=now,
+                estado='OBSERVADO',
                 codigo_qr_verificacion='SITELOG-OBRA2-AS1-DEMO0003CERT',
                 id_usuario=u_sup.id
             )
+            asiento3.hash_contenido = AsientoCuaderno.calcular_hash(
+                asiento3.id_obra, asiento3.numero_correlativo, asiento3.tipo,
+                asiento3.titulo, asiento3.descripcion, asiento3.lat_registro,
+                asiento3.lon_registro, asiento3.fecha_registro, asiento3.id_usuario
+            )
+
             asiento4 = AsientoCuaderno(
                 id_obra=obra2.id,
                 id_frente=frente_m1.id,
@@ -204,10 +229,18 @@ def seed_db():
                 descripcion='Se registra sustento técnico de ensayo de mecánica de suelos para reemplazo de estrato arcilloso.',
                 lat_registro=-6.83725,
                 lon_registro=-79.93415,
-                estado='Emitido',
+                accuracy_registro=11.2,
+                fecha_registro=now,
+                estado='EMITIDO',
                 codigo_qr_verificacion='SITELOG-OBRA2-AS2-DEMO0004CERT',
                 id_usuario=u_res.id
             )
+            asiento4.hash_contenido = AsientoCuaderno.calcular_hash(
+                asiento4.id_obra, asiento4.numero_correlativo, asiento4.tipo,
+                asiento4.titulo, asiento4.descripcion, asiento4.lat_registro,
+                asiento4.lon_registro, asiento4.fecha_registro, asiento4.id_usuario
+            )
+
             db.session.add_all([asiento1, asiento2, asiento3, asiento4])
             db.session.flush()
 
@@ -247,15 +280,15 @@ def seed_db():
             # 8. TABLA: historial_cambios
             hist1 = HistorialCambio(
                 id_asiento=asiento1.id,
-                estado_anterior='Emitido',
-                estado_nuevo='Absuelto',
+                estado_anterior='EMITIDO',
+                estado_nuevo='CONCLUIDO',
                 comentario='Conformidad otorgada por Supervisión en campo.',
                 id_usuario=u_sup.id
             )
             hist2 = HistorialCambio(
                 id_asiento=asiento2.id,
                 estado_anterior=None,
-                estado_nuevo='Pendiente de Absolución',
+                estado_nuevo='EMITIDO',
                 comentario='Apertura de consulta técnica con plazo contractual.',
                 id_usuario=u_res.id
             )

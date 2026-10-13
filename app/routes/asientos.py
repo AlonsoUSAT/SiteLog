@@ -16,8 +16,8 @@ asientos_bp = Blueprint('asientos', __name__, url_prefix='/asientos')
 def registrar_asiento():
     """
     POST /asientos
-    Capa Route: Registra nuevo asiento con validación de proximidad y correlativo transaccional.
-    Idempotencia offline: 409 con el asiento original si se repite 'uuid_operacion'.
+    Registra un asiento a partir de uuid_operacion (idempotente).
+    Valida geocerca y accuracy del GPS, calcula hash SHA-256 inmutable y genera código QR al pasar a EMITIDO.
     """
     usuario = get_current_user()
     data = request.get_json(silent=True) or {}
@@ -45,7 +45,7 @@ def registrar_asiento():
 def detalle_asiento(id):
     """
     GET /asientos/<id>
-    Capa Route: Detalle completo del asiento incluyendo respuestas, incidencias y evidencias.
+    Detalle completo del asiento incluyendo respuestas, incidencias y evidencias.
     """
     usuario = get_current_user()
     success, error_msg, status_code, data = AsientoService.obtener_detalle(id, usuario)
@@ -68,12 +68,12 @@ def detalle_asiento(id):
 def responder_asiento(id):
     """
     POST /asientos/<id>/responder
-    Capa Route: Absolución formal del supervisor delegando a AsientoService.
+    Absolución formal de consulta técnica por el Supervisor; transiciona el asiento a ABSUELTO.
     """
     usuario = get_current_user()
     data = request.get_json(silent=True) or {}
     descripcion = data.get('descripcion', '')
-    nuevo_estado = data.get('estado', 'Absuelto')
+    nuevo_estado = data.get('estado', 'ABSUELTO')
 
     success, message, status_code, asiento_data = AsientoService.responder_asiento(
         asiento_id=id,
@@ -93,7 +93,42 @@ def responder_asiento(id):
 
 
 # ---------------------------------------------------------------------------
-# (Bloque de Dana) POST /asientos/<id>/incidencias
+# 4. PUT /asientos/<id>/estado (NUEVO endpoint Sección 9 - Versión 2)
+# ---------------------------------------------------------------------------
+@asientos_bp.route('/<int:id>/estado', methods=['PUT'])
+@jwt_required()
+@role_required(['Supervisor', 'Administrador'])
+def cambiar_estado_asiento(id):
+    """
+    PUT /asientos/<id>/estado
+    Aplica una transición válida según la máquina de estados de la sección 4.1.
+    (Ej: EMITIDO -> OBSERVADO, ABSUELTO -> CONCLUIDO).
+    Valida en servidor que la transición esté permitida para el rol solicitante.
+    """
+    usuario = get_current_user()
+    data = request.get_json(silent=True) or {}
+    nuevo_estado = data.get('nuevo_estado') or data.get('estado', '')
+    comentario = data.get('comentario', '')
+
+    success, message, status_code, asiento_data = AsientoService.cambiar_estado(
+        asiento_id=id,
+        usuario=usuario,
+        nuevo_estado=nuevo_estado,
+        comentario=comentario
+    )
+
+    if not success:
+        return jsonify({'success': False, 'error': message}), status_code
+
+    return jsonify({
+        'success': True,
+        'message': message,
+        'asiento': asiento_data
+    }), status_code
+
+
+# ---------------------------------------------------------------------------
+# 5. POST /asientos/<id>/incidencias
 # ---------------------------------------------------------------------------
 @asientos_bp.route('/<int:id>/incidencias', methods=['POST'])
 @jwt_required()
@@ -101,7 +136,7 @@ def responder_asiento(id):
 def registrar_incidencia(id):
     """
     POST /asientos/<id>/incidencias
-    Capa Route: Registro de incidencia técnica con foto opcional delegando a IncidenciaService.
+    Registro de incidencia técnica con foto opcional (multipart/form-data o JSON).
     """
     user_id = int(get_jwt_identity())
 
@@ -140,14 +175,14 @@ def registrar_incidencia(id):
 
 
 # ---------------------------------------------------------------------------
-# 5. GET /asientos/<id>/historial
+# 6. GET /asientos/<id>/historial
 # ---------------------------------------------------------------------------
 @asientos_bp.route('/<int:id>/historial', methods=['GET'])
 @jwt_required()
 def historial_asiento(id):
     """
     GET /asientos/<id>/historial
-    Capa Route: Trazabilidad cronológica de cambios y auditoría contractual del asiento.
+    Trazabilidad cronológica de cambios y auditoría contractual del asiento.
     """
     usuario = get_current_user()
     success, error_msg, status_code, historial = AsientoService.obtener_historial(id, usuario)
@@ -163,13 +198,14 @@ def historial_asiento(id):
 
 
 # ---------------------------------------------------------------------------
-# 4. GET /asientos/verificar/<codigo_qr> (Público)
+# 7. GET /asientos/verificar/<codigo_qr> (Público)
 # ---------------------------------------------------------------------------
 @asientos_bp.route('/verificar/<string:codigo_qr>', methods=['GET'])
 def verificar_codigo_qr(codigo_qr):
     """
     GET /asientos/verificar/<codigo_qr>
-    Capa Route: Verificación pública de autenticidad inalterable por QR delegando a AsientoService.
+    Endpoint público de verificación: recalcula el hash SHA-256 del contenido actual
+    y lo contrasta contra hash_contenido para certificar autenticidad e inalterabilidad (Sección 4.2).
     """
     success, error_msg, status_code, data = AsientoService.verificar_qr(codigo_qr)
 
@@ -177,6 +213,7 @@ def verificar_codigo_qr(codigo_qr):
         return jsonify({
             'success': False,
             'valido': False,
+            'integro': False,
             'error': error_msg
         }), status_code
 

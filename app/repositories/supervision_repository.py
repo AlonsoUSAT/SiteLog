@@ -3,7 +3,7 @@ from app.models.asiento import AsientoCuaderno
 from app.models.incidencia import IncidenciaObra
 
 class SupervisionRepository:
-    """Capa de acceso a datos para métricas consolidadas y KPIs contractuales."""
+    """Capa de acceso a datos para métricas consolidadas y KPIs contractuales (Versión 2)."""
 
     @staticmethod
     def get_kpis_contractuales():
@@ -14,13 +14,17 @@ class SupervisionRepository:
         obras_concluidas = Obra.query.filter_by(estado='Concluida').count()
 
         total_asientos = AsientoCuaderno.query.count()
-        consultas_pendientes = AsientoCuaderno.query.filter_by(
-            tipo='Consulta', estado='Pendiente de Absolución'
-        ).count()
+        asientos_emitidos = AsientoCuaderno.query.filter_by(estado='EMITIDO').count()
+        asientos_observados = AsientoCuaderno.query.filter_by(estado='OBSERVADO').count()
+        asientos_absueltos = AsientoCuaderno.query.filter_by(estado='ABSUELTO').count()
+        asientos_concluidos = AsientoCuaderno.query.filter_by(estado='CONCLUIDO').count()
 
-        asientos_emitidos = AsientoCuaderno.query.filter_by(estado='Emitido').count()
-        asientos_absueltos = AsientoCuaderno.query.filter_by(estado='Absuelto').count()
-        asientos_observados = AsientoCuaderno.query.filter_by(estado='Observado').count()
+        # Filtro calculado de interfaz (Nota sección 4.1): Consulta en EMITIDO sin respuesta
+        consultas_pendientes = AsientoCuaderno.query.filter(
+            AsientoCuaderno.tipo == 'Consulta',
+            AsientoCuaderno.estado == 'EMITIDO',
+            ~AsientoCuaderno.respuestas.any()
+        ).count()
 
         total_incidencias = IncidenciaObra.query.count()
 
@@ -33,7 +37,8 @@ class SupervisionRepository:
             'total_asientos': total_asientos,
             'consultas_pendientes': consultas_pendientes,
             'asientos_emitidos': asientos_emitidos,
-            'asientos_absueltos': asientos_absueltos,
             'asientos_observados': asientos_observados,
+            'asientos_absueltos': asientos_absueltos,
+            'asientos_concluidos': asientos_concluidos,
             'total_incidencias': total_incidencias
         }
