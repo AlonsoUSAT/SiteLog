@@ -1,0 +1,404 @@
+{
+	"info": {
+		"_postman_id": "b3d4e5f6-7890-abcd-ef01-sitelogdana03",
+		"name": "SiteLog - Bloque 3 (Dana: Incidencias, Evidencias y Supervisión)",
+		"description": "Colección oficial de Postman para el Bloque 3 de SiteLog (Dana: Incidencias técnicas con evidencias fotográficas, Actualización de estado por Supervisión, KPIs contractuales y Residentes disponibles).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Autenticación (Auth)",
+			"item": [
+				{
+					"name": "POST Login - Residente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var response = JSON.parse(responseBody);",
+									"var tokenVal = (response.data && response.data.token) ? response.data.token : response.token;",
+									"pm.environment.set(\"token\", tokenVal);",
+									"pm.collectionVariables.set(\"token\", tokenVal);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"correo\": \"residente@sitelog.pe\",\n    \"password\": \"residente123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica al Ingeniero Residente y guarda automáticamente su token JWT en {{token}}."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Login - Supervisor",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var response = JSON.parse(responseBody);",
+									"var tokenVal = (response.data && response.data.token) ? response.data.token : response.token;",
+									"pm.environment.set(\"token\", tokenVal);",
+									"pm.collectionVariables.set(\"token\", tokenVal);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"correo\": \"supervisor@sitelog.pe\",\n    \"password\": \"supervisor123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica a la Supervisora de Obra y guarda automáticamente su token JWT en {{token}}."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Login - Administrador",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var response = JSON.parse(responseBody);",
+									"var tokenVal = (response.data && response.data.token) ? response.data.token : response.token;",
+									"pm.environment.set(\"token\", tokenVal);",
+									"pm.collectionVariables.set(\"token\", tokenVal);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"correo\": \"admin@sitelog.pe\",\n    \"password\": \"admin123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica al Administrador del sistema y guarda automáticamente su token JWT en {{token}}."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Módulo de Incidencias y Evidencias",
+			"item": [
+				{
+					"name": "POST Registrar Incidencia Técnica (JSON)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tipo_incidencia\": \"Interferencia de terceros\",\n    \"descripcion\": \"Red matriz de tubería de agua sin catastro interfiere con trazo de excavación en Sector B.\",\n    \"impacto_contractual\": \"Medio\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/asientos/1/incidencias",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"asientos",
+								"1",
+								"incidencias"
+							]
+						},
+						"description": "Registra una incidencia técnica vinculada al Asiento #1. Rol mínimo: Residente."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Registrar Incidencia con Evidencia Fotográfica (multipart/form-data)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "tipo_incidencia",
+									"value": "Clima adverso",
+									"type": "text"
+								},
+								{
+									"key": "descripcion",
+									"value": "Lluvias torrenciales atípicas anegan zanja de cimentación e impiden vaciado de concreto.",
+									"type": "text"
+								},
+								{
+									"key": "impacto_contractual",
+									"value": "Alto",
+									"type": "text"
+								},
+								{
+									"key": "evidencia_foto",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/asientos/1/incidencias",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"asientos",
+								"1",
+								"incidencias"
+							]
+						},
+						"description": "Registra incidencia técnica asociada a un asiento admitiendo la subida de evidencia fotográfica (multipart/form-data). Rol mínimo: Residente."
+					},
+					"response": []
+				},
+				{
+					"name": "PUT Actualizar Estado / Observación de Incidencia",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"observacion\": \"Supervisión verifica en campo la interferencia. Se solicita plano de replanteo y se autoriza ampliación de plazo preliminar.\",\n    \"impacto_contractual\": \"Crítico\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/incidencias/1/estado",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"incidencias",
+								"1",
+								"estado"
+							]
+						},
+						"description": "Actualiza el impacto u observación del Supervisor sobre la incidencia #1. Rol mínimo: Supervisor."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Detalle de Incidencia con Evidencias",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/incidencias/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"incidencias",
+								"1"
+							]
+						},
+						"description": "Obtiene los detalles de la incidencia técnica #1 junto a todas sus evidencias fotográficas adjuntas."
+					},
+					"response": []
+				},
+				{
+					"name": "GET Listar Todas las Incidencias",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/incidencias",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"incidencias"
+							]
+						},
+						"description": "Lista todas las incidencias registradas en la plataforma."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Módulo de Supervisión",
+			"item": [
+				{
+					"name": "GET KPIs Contractuales de Supervisión",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/supervision/kpis-contractuales",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"supervision",
+								"kpis-contractuales"
+							]
+						},
+						"description": "Devuelve KPIs consolidados para el dashboard de supervisión: obras por estado, consultas pendientes, asientos observados e incidencias abiertas. Rol mínimo: Supervisor o Administrador."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Módulo de Usuarios (Residentes)",
+			"item": [
+				{
+					"name": "GET Listar Residentes Activos para Asignación",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/usuarios/residentes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"usuarios",
+								"residentes"
+							]
+						},
+						"description": "Lista todos los ingenieros residentes activos disponibles para ser asignados a contratos u obras. Rol mínimo: Supervisor o Administrador."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
