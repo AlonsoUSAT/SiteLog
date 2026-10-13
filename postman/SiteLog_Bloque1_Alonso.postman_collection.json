@@ -148,6 +148,39 @@
 					"response": []
 				},
 				{
+					"name": "POST Login - Credenciales Inválidas (Error 401)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"correo\": \"residente@sitelog.pe\",\n    \"password\": \"clave_incorrecta\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Prueba de caso de error 401 con contraseña incorrecta."
+					},
+					"response": []
+				},
+				{
 					"name": "POST Actualizar FCM Token",
 					"request": {
 						"method": "POST",
