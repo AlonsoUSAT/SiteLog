@@ -22,21 +22,22 @@ Para que la integración del equipo y el consumo desde Android (Retrofit + Gson)
 
 ---
 
-### 👤 Bloque 2: MIA — Asientos del Cuaderno y Verificación QR (5 endpoints)
+### 👤 Bloque 2: MIA — Asientos del Cuaderno y Verificación QR (6 endpoints)
 * **Rama de Git:** `git checkout -b feature/mia-asientos-qr`
 * **Archivo:** `app/routes/asientos.py`
 
 | # | Método | Endpoint | Rol mínimo | Descripción |
 |---|---|---|---|---|
-| 1 | `POST` | `/asientos` | Residente | Registra nuevo asiento con correlativo transaccional, coordenadas y genera `codigo_qr_verificacion`. |
+| 1 | `POST` | `/asientos` | Residente | Registra nuevo asiento con correlativo transaccional, geocerca con accuracy GPS, hash SHA-256 inmutable y QR. |
 | 2 | `GET` | `/asientos/{id}` | Autenticado | Detalle del asiento con respuestas, incidencias y evidencias. |
-| 3 | `POST` | `/asientos/{id}/responder` | Supervisor | Absolución formal de consulta técnica; actualiza estado del asiento. |
-| 4 | `GET` | `/asientos/verificar/{codigo_qr}` | Público / Autenticado | Verifica autenticidad del asiento mediante su código QR y devuelve datos certificados. |
-| 5 | `GET` | `/asientos/{id}/historial` | Autenticado | Trazabilidad cronológica de cambios de estado y objeciones. |
+| 3 | `POST` | `/asientos/{id}/responder` | Supervisor | Absolución formal de consulta técnica; transiciona el asiento a `ABSUELTO`. |
+| 4 | `PUT` | `/asientos/{id}/estado` | Supervisor / Admin | Transiciones de ciclo de vida oficial (`EMITIDO -> OBSERVADO`, `OBSERVADO -> ABSUELTO`, `ABSUELTO -> CONCLUIDO`). |
+| 5 | `GET` | `/asientos/verificar/{codigo_qr}` | Público | Verifica autenticidad e integridad del asiento recalculando hash SHA-256 frente a adulteraciones en BD. |
+| 6 | `GET` | `/asientos/{id}/historial` | Autenticado | Trazabilidad cronológica de cambios de estado y objeciones. |
 
 ---
 
-### 👤 Bloque 3: DANA — Incidencias, Evidencias y Supervisión (4 endpoints)
+### 👤 Bloque 3: DANA — Incidencias, Evidencias y Supervisión (5 endpoints)
 * **Rama de Git:** `git checkout -b feature/dana-incidencias-supervision`
 * **Archivos:** `app/routes/incidencias.py`, `app/routes/supervision.py`, `app/routes/usuarios.py` (y ruta de incidencias en `asientos.py`)
 
@@ -44,8 +45,9 @@ Para que la integración del equipo y el consumo desde Android (Retrofit + Gson)
 |---|---|---|---|---|
 | 1 | `POST` | `/asientos/{id}/incidencias` | Residente | Registra incidencia técnica; admite `multipart/form-data` si incluye foto. |
 | 2 | `PUT` | `/incidencias/{id}/estado` | Supervisor | Actualiza estado u observación del Supervisor sobre una incidencia. |
-| 3 | `GET` | `/supervision/kpis-contractuales` | Supervisor / Admin | KPIs: obras por estado, consultas pendientes, plazos e incidencias abiertas. |
-| 4 | `GET` | `/usuarios/residentes` | Supervisor / Admin | Lista residentes activos disponibles para asignación. |
+| 3 | `DELETE` | `/incidencias/{id}` | Residente / Sup / Admin | Elimina una incidencia preliminar (bloqueado con 409 si el asiento asociado ya está `CONCLUIDO` o `ABSUELTO`). |
+| 4 | `GET` | `/supervision/kpis-contractuales` | Supervisor / Admin | KPIs: obras por estado, consultas pendientes, 5 estados oficiales e incidencias. |
+| 5 | `GET` | `/usuarios/residentes` | Supervisor / Admin | Lista residentes activos disponibles para asignación. |
 
 ---
 

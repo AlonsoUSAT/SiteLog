@@ -327,6 +327,110 @@
 						"description": "Lista todas las incidencias registradas en la plataforma."
 					},
 					"response": []
+				},
+				{
+					"name": "DELETE Eliminar Incidencia Preliminar (200 OK)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/incidencias/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"incidencias",
+								"1"
+							]
+						},
+						"description": "Elimina una incidencia preliminar (solo permitido si el asiento no está en estado formal ABSUELTO o CONCLUIDO)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Código HTTP 200 o 409\", function () { pm.expect([200, 409]).to.include(pm.response.code); });",
+									"var j = pm.response.json();",
+									"pm.test(\"Estructura JSON consistente\", function () { pm.expect(j).to.have.property(\"success\"); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE Error 404 - Incidencia Inexistente",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/incidencias/99999",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"incidencias",
+								"99999"
+							]
+						},
+						"description": "Intento de eliminar una incidencia que no existe."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Código HTTP 404\", function () { pm.response.to.have.status(404); });",
+									"var j = pm.response.json();",
+									"pm.test(\"success = false\", function () { pm.expect(j.success).to.eql(false); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE Error 401 - Sin Token JWT",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/incidencias/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"incidencias",
+								"1"
+							]
+						},
+						"description": "Intento de eliminación sin cabecera Authorization Bearer."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Código HTTP 401\", function () { pm.response.to.have.status(401); });"
+								]
+							}
+						}
+					]
 				}
 			]
 		},

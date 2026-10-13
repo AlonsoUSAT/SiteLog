@@ -39,3 +39,9 @@ class IncidenciaRepository:
 
         db.session.commit()
         return incidencia
+
+    @staticmethod
+    def delete(incidencia: IncidenciaObra):
+        db.session.delete(incidencia)
+        db.session.commit()
+        return True

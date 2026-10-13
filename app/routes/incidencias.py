@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
-from app.utils.decorators import role_required
+from app.utils.decorators import role_required, get_current_user
 from app.services.incidencia_service import IncidenciaService
 
 incidencias_bp = Blueprint('incidencias', __name__, url_prefix='/incidencias')
@@ -71,3 +71,26 @@ def actualizar_estado_incidencia(id):
         'message': message,
         'incidencia': inc_data
     }), status_code
+
+
+@incidencias_bp.route('/<int:id>', methods=['DELETE'])
+@jwt_required()
+@role_required(['Residente', 'Supervisor', 'Administrador'])
+def eliminar_incidencia(id):
+    """
+    DELETE /incidencias/<id>
+    Capa Route: Elimina una incidencia preliminar delegando a IncidenciaService.
+    Valida permisos y restringe eliminación si el asiento ya se encuentra CONCLUIDO o ABSUELTO (409).
+    """
+    usuario = get_current_user()
+    success, message, status_code, data = IncidenciaService.eliminar(id, usuario)
+
+    if not success:
+        return jsonify({'success': False, 'error': message}), status_code
+
+    return jsonify({
+        'success': True,
+        'message': message,
+        'data': data
+    }), status_code
+

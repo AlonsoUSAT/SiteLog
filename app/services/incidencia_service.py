@@ -83,3 +83,34 @@ class IncidenciaService:
         except Exception as e:
             db.session.rollback()
             return False, f"Error al actualizar incidencia: {str(e)}", 500, None
+
+    @staticmethod
+    def eliminar(incidencia_id: int, usuario):
+        """
+        DELETE /incidencias/<id>
+        Eliminación controlada de incidencia preliminar con validación contractual.
+        Bloquea eliminación si el asiento ya se encuentra CONCLUIDO o ABSUELTO (409 Conflict).
+        """
+        incidencia = IncidenciaRepository.get_by_id(incidencia_id)
+        if not incidencia:
+            return False, "Incidencia no encontrada", 404, None
+
+        asiento = incidencia.asiento
+        # 1. Validación de autorización por rol
+        if usuario.rol == 'Residente' and asiento.id_usuario != usuario.id:
+            return False, "No estás autorizado para eliminar incidencias registradas por otro usuario", 403, None
+
+        # 2. Validación de regla de negocio: inalterabilidad en estados avanzados
+        if asiento.estado == 'CONCLUIDO':
+            return False, "No se puede eliminar una incidencia de un asiento en estado CONCLUIDO (expediente formal inalterable)", 409, None
+
+        if asiento.estado == 'ABSUELTO' and usuario.rol == 'Residente':
+            return False, "No se puede eliminar una incidencia asociada a un asiento que ya ha sido absuelto", 409, None
+
+        try:
+            IncidenciaRepository.delete(incidencia)
+            return True, f"Incidencia #{incidencia_id} eliminada exitosamente", 200, {'id_eliminado': incidencia_id}
+
+        except Exception as e:
+            db.session.rollback()
+            return False, f"Error al eliminar incidencia: {str(e)}", 500, None
