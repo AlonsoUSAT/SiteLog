@@ -35,12 +35,13 @@ def login():
             'error': 'Usuario inactivo. Contacte al administrador.'
         }), 403
 
-    # Generar token JWT con el id del usuario como identidad y claims con su rol y nombre
+    # Generar token JWT con el id del usuario como identidad y claims con id, nombre y rol
     access_token = create_access_token(
         identity=str(usuario.id),
         additional_claims={
-            'rol': usuario.rol,
+            'id': usuario.id,
             'nombre': usuario.nombre,
+            'rol': usuario.rol,
             'correo': usuario.correo
         }
     )
@@ -48,7 +49,13 @@ def login():
     return jsonify({
         'success': True,
         'message': 'Autenticación exitosa',
+        'token': access_token,
         'access_token': access_token,
+        'id': usuario.id,
+        'nombre': usuario.nombre,
+        'rol': usuario.rol,
+        'correo': usuario.correo,
+        'colegiatura': usuario.colegiatura,
         'usuario': {
             'id': usuario.id,
             'nombre': usuario.nombre,
