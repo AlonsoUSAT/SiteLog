@@ -325,6 +325,64 @@
           ]
         },
         {
+          "name": "Precisión GPS excede radio - 400 (accuracy_registro)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos"
+              ]
+            },
+            "description": "Rechaza con 400 si accuracy_registro > radio_metros (Sección 6 / Reto R2).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id_obra\": \"{{id_obra}}\",\n    \"tipo\": \"Consulta\",\n    \"titulo\": \"Test de precisi\\u00f3n deficiente\",\n    \"descripcion\": \"Precisi\\u00f3n de GPS reportada excede el radio de geocerca.\",\n    \"lat_registro\": -6.771,\n    \"lon_registro\": -79.8405,\n    \"accuracy_registro\": 85.0,\n    \"uuid_operacion\": \"{{uuid_acc}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"uuid_acc\", pm.variables.replaceIn(\"{{$guid}}\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y alerta de GPS\", function () { pm.expect(j.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Faltan campos obligatorios - 400",
           "request": {
             "method": "POST",
@@ -1174,6 +1232,318 @@
                   "pm.test(\"Código HTTP 404\", function () { pm.response.to.have.status(404); });",
                   "var j = pm.response.json();",
                   "pm.test(\"valido = false\", function(){ pm.expect(j.valido).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. PUT /asientos/{id}/estado (Supervisor / Administrador)",
+      "item": [
+        {
+          "name": "Transición EMITIDO -> OBSERVADO - OK 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "estado"
+              ]
+            },
+            "description": "Supervisor observa el asiento recién emitido.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nuevo_estado\": \"OBSERVADO\",\n    \"comentario\": \"Falta mayor detalle en el plano de trazo adjunto.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = true\", function () { pm.expect(j.success).to.eql(true); });",
+                  "pm.test(\"estado = OBSERVADO\", function () { pm.expect(j.asiento.estado).to.eql(\"OBSERVADO\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transición OBSERVADO -> ABSUELTO - OK 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "estado"
+              ]
+            },
+            "description": "Supervisor absuelve la observación tras subsanación.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nuevo_estado\": \"ABSUELTO\",\n    \"comentario\": \"Se present\\u00f3 el sustento t\\u00e9cnico solicitado.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"estado = ABSUELTO\", function () { pm.expect(j.asiento.estado).to.eql(\"ABSUELTO\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transición ABSUELTO -> CONCLUIDO - OK 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/{{asiento_id}}/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "{{asiento_id}}",
+                "estado"
+              ]
+            },
+            "description": "Supervisor o Administrador pasa a estado terminal CONCLUIDO.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nuevo_estado\": \"CONCLUIDO\",\n    \"comentario\": \"Cierre formal de la partida contractual.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"estado = CONCLUIDO\", function () { pm.expect(j.asiento.estado).to.eql(\"CONCLUIDO\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transición inválida - 400 Bad Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/2/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "2",
+                "estado"
+              ]
+            },
+            "description": "Intento de transición ilegal según la máquina de estados.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nuevo_estado\": \"CONCLUIDO\",\n    \"comentario\": \"Salto no permitido\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false\", function () { pm.expect(j.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Residente no autorizado - 403 Forbidden",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_residente}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/2/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "2",
+                "estado"
+              ]
+            },
+            "description": "Residente no tiene permiso para alterar el ciclo de vida oficial.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nuevo_estado\": \"OBSERVADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 403\", function () { pm.response.to.have.status(403); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false\", function () { pm.expect(j.success).to.eql(false); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Alteración de estado terminal - 409 Conflict",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token_supervisor}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/asientos/1/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "asientos",
+                "1",
+                "estado"
+              ]
+            },
+            "description": "Asiento 1 está en CONCLUIDO y no puede volver a modificarse.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nuevo_estado\": \"OBSERVADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Código HTTP 409\", function () { pm.response.to.have.status(409); });",
+                  "var j = pm.response.json();",
+                  "pm.test(\"success = false y alerta de inmutable\", function () { pm.expect(j.success).to.eql(false); });"
                 ]
               }
             }
