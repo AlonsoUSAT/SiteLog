@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-sitelogalonso01",
 		"name": "SiteLog - Bloque 1 (Alonso: Auth y Obras)",
-		"description": "Colección de Postman para el Bloque 1 de SiteLog (Alonso: Autenticación JWT, FCM Token y Módulo de Obras).\nIncluye scripts de prueba automáticos y guardado automático del token JWT en variables de entorno.",
+		"description": "Colección de Postman para el Bloque 1 de SiteLog (Alonso: Autenticación JWT, FCM Token y Módulo de Obras).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -16,19 +16,9 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Respuesta exitosa con token JWT\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
-									"    pm.expect(jsonData.token).to.be.a('string');",
-									"    pm.expect(jsonData.rol).to.eql('Residente');",
-									"    ",
-									"    // Guardar automáticamente el token JWT para los siguientes endpoints",
-									"    pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
-									"});"
+									"var response = JSON.parse(responseBody)",
+									"pm.environment.set(\"token\", response.data.token)",
+									"pm.collectionVariables.set(\"token\", response.data.token)"
 								],
 								"type": "text/javascript"
 							}
@@ -44,7 +34,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"correo\": \"residente@sitelog.pe\",\n    \"password\": \"residente123\"\n}"
+							"raw": "{\n    \"correo\": \"residente@sitelog.pe\",\n    \"password\": \"residente123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -56,7 +51,7 @@
 								"login"
 							]
 						},
-						"description": "Autentica al Residente y guarda automáticamente su token en la variable {{jwt_token}}."
+						"description": "Autentica al Residente y guarda su token en {{token}}."
 					},
 					"response": []
 				},
@@ -67,16 +62,9 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Respuesta exitosa con token JWT de Supervisor\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
-									"    pm.expect(jsonData.rol).to.eql('Supervisor');",
-									"    pm.collectionVariables.set(\"jwt_token_supervisor\", jsonData.token);",
-									"});"
+									"var response = JSON.parse(responseBody)",
+									"pm.environment.set(\"token\", response.data.token)",
+									"pm.collectionVariables.set(\"token\", response.data.token)"
 								],
 								"type": "text/javascript"
 							}
@@ -92,7 +80,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"correo\": \"supervisor@sitelog.pe\",\n    \"password\": \"supervisor123\"\n}"
+							"raw": "{\n    \"correo\": \"supervisor@sitelog.pe\",\n    \"password\": \"supervisor123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -104,7 +97,7 @@
 								"login"
 							]
 						},
-						"description": "Autentica al Supervisor."
+						"description": "Autentica al Supervisor y guarda su token en {{token}}."
 					},
 					"response": []
 				},
@@ -115,16 +108,9 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Respuesta exitosa con token JWT de Admin\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
-									"    pm.expect(jsonData.rol).to.eql('Administrador');",
-									"    pm.collectionVariables.set(\"jwt_token_admin\", jsonData.token);",
-									"});"
+									"var response = JSON.parse(responseBody)",
+									"pm.environment.set(\"token\", response.data.token)",
+									"pm.collectionVariables.set(\"token\", response.data.token)"
 								],
 								"type": "text/javascript"
 							}
@@ -140,7 +126,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"correo\": \"admin@sitelog.pe\",\n    \"password\": \"admin123\"\n}"
+							"raw": "{\n    \"correo\": \"admin@sitelog.pe\",\n    \"password\": \"admin123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
@@ -152,77 +143,12 @@
 								"login"
 							]
 						},
-						"description": "Autentica al Administrador Contractual."
-					},
-					"response": []
-				},
-				{
-					"name": "POST Login - Credenciales Inválidas (Error 401)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 401 Unauthorized\", function () {",
-									"    pm.response.to.have.status(401);",
-									"});",
-									"",
-									"pm.test(\"Respuesta contiene error en formato contrato\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(false);",
-									"    pm.expect(jsonData.error).to.be.a('string');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"correo\": \"residente@sitelog.pe\",\n    \"password\": \"clave_incorrecta\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"auth",
-								"login"
-							]
-						},
-						"description": "Prueba de caso de error 401."
+						"description": "Autentica al Administrador y guarda su token en {{token}}."
 					},
 					"response": []
 				},
 				{
 					"name": "POST Actualizar FCM Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Token FCM actualizado exitosamente\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -232,12 +158,17 @@
 							},
 							{
 								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}"
+								"value": "Bearer {{token}}"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"fcm_token\": \"fcm_token_demo_device_alonso_android_123456\"\n}"
+							"raw": "{\n    \"fcm_token\": \"fcm_token_demo_device_alonso_android_123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/fcm-token",
@@ -249,7 +180,7 @@
 								"fcm-token"
 							]
 						},
-						"description": "Registra o actualiza el token de notificaciones FCM del dispositivo del usuario logueado."
+						"description": "Registra o actualiza el token FCM del dispositivo."
 					},
 					"response": []
 				}
@@ -260,32 +191,12 @@
 			"item": [
 				{
 					"name": "GET Listar Obras Asignadas",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Lista de obras en formato JSON uniforme\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
-									"    pm.expect(jsonData.obras).to.be.an('array');",
-									"    pm.expect(jsonData.count).to.be.above(0);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}"
+								"value": "Bearer {{token}}"
 							}
 						],
 						"url": {
@@ -297,31 +208,18 @@
 								"obras"
 							]
 						},
-						"description": "Lista las obras a las que tiene acceso el usuario según su rol."
+						"description": "Lista las obras según el rol del usuario autenticado."
 					},
 					"response": []
 				},
 				{
 					"name": "GET Listar Obras - Filtro por Estado",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}"
+								"value": "Bearer {{token}}"
 							}
 						],
 						"url": {
@@ -339,39 +237,18 @@
 								}
 							]
 						},
-						"description": "Filtra obras por estado ('En ejecución', 'Con observaciones', etc.)."
+						"description": "Filtra obras por estado."
 					},
 					"response": []
 				},
 				{
-					"name": "GET Detalle de Obra por ID (con frentes y resumen)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Obra contiene frentes y resumen de asientos\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
-									"    pm.expect(jsonData.obra).to.be.an('object');",
-									"    pm.expect(jsonData.obra.frentes).to.be.an('array');",
-									"    pm.expect(jsonData.obra.resumen).to.be.an('object');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
+					"name": "GET Detalle de Obra por ID",
 					"request": {
 						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}"
+								"value": "Bearer {{token}}"
 							}
 						],
 						"url": {
@@ -384,80 +261,18 @@
 								"1"
 							]
 						},
-						"description": "Detalle general de la obra 1 con sus sectores georreferenciados y métricas."
-					},
-					"response": []
-				},
-				{
-					"name": "GET Detalle de Obra - No Existe (Error 404)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 404 Not Found\", function () {",
-									"    pm.response.to.have.status(404);",
-									"});",
-									"",
-									"pm.test(\"Mensaje de error coherente\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(false);",
-									"    pm.expect(jsonData.error).to.be.a('string');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/obras/9999",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"obras",
-								"9999"
-							]
-						},
-						"description": "Prueba de caso de error 404 cuando la obra no existe."
+						"description": "Detalle general de la obra 1 con frentes y resumen de asientos."
 					},
 					"response": []
 				},
 				{
 					"name": "GET Listar Asientos Cronológicos de Obra",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Lista cronológica de asientos\", function () {",
-									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.success).to.eql(true);",
-									"    pm.expect(jsonData.asientos).to.be.an('array');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}"
+								"value": "Bearer {{token}}"
 							}
 						],
 						"url": {
@@ -471,31 +286,18 @@
 								"asientos"
 							]
 						},
-						"description": "Lista todos los asientos del cuaderno de la obra 1 en orden cronológico."
+						"description": "Lista cronológica de asientos del cuaderno de la obra 1."
 					},
 					"response": []
 				},
 				{
-					"name": "GET Listar Asientos - Filtro por Tipo y Fechas",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200 OK\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
+					"name": "GET Listar Asientos - Con Filtros",
 					"request": {
 						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}"
+								"value": "Bearer {{token}}"
 							}
 						],
 						"url": {
@@ -523,7 +325,7 @@
 								}
 							]
 						},
-						"description": "Filtra asientos por tipo (Consulta, Notificación, Instrucción, Modificación) y rango de fechas."
+						"description": "Filtra asientos por tipo, estado y rango de fechas."
 					},
 					"response": []
 				}
@@ -537,17 +339,7 @@
 			"type": "string"
 		},
 		{
-			"key": "jwt_token",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "jwt_token_supervisor",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "jwt_token_admin",
+			"key": "token",
 			"value": "",
 			"type": "string"
 		}

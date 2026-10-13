@@ -46,6 +46,15 @@ def login():
         }
     )
 
+    user_payload = {
+        'id': usuario.id,
+        'nombre': usuario.nombre,
+        'correo': usuario.correo,
+        'rol': usuario.rol,
+        'colegiatura': usuario.colegiatura,
+        'token': access_token
+    }
+
     return jsonify({
         'success': True,
         'message': 'Autenticación exitosa',
@@ -56,13 +65,8 @@ def login():
         'rol': usuario.rol,
         'correo': usuario.correo,
         'colegiatura': usuario.colegiatura,
-        'usuario': {
-            'id': usuario.id,
-            'nombre': usuario.nombre,
-            'correo': usuario.correo,
-            'rol': usuario.rol,
-            'colegiatura': usuario.colegiatura
-        }
+        'data': user_payload,
+        'usuario': user_payload
     }), 200
 
 
