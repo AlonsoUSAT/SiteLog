@@ -11,36 +11,48 @@ SiteLog/
 ├── app/
 │   ├── __init__.py           # Application Factory (create_app, Blueprints, Error Handlers)
 │   ├── extensions.py         # Instancias desacopladas de SQLAlchemy, JWT y CORS
-│   ├── models/               # Modelos SQLAlchemy para MySQL (Sección 7 de la rúbrica)
-│   │   ├── __init__.py
-│   │   ├── usuario.py        # Tabla usuarios (auth, roles, fcm_token)
-│   │   ├── obra.py           # Tabla obras (georreferenciadas con radio de 50m)
-│   │   ├── frente.py         # Tabla frentes_obra (hitos/sectores de trabajo)
-│   │   ├── asiento.py        # Tabla asientos_cuaderno (correlativo, QR inalterable)
-│   │   ├── respuesta.py      # Tabla respuestas_asiento (absoluciones del supervisor)
-│   │   ├── incidencia.py     # Tabla incidencias_obra
-│   │   ├── evidencia.py      # Tabla evidencias (fotos multipart)
-│   │   ├── historial.py      # Tabla historial_cambios (auditoría y trazabilidad)
-│   │   └── notificacion.py   # Tabla notificaciones_log (auditoría push FCM)
-│   ├── routes/               # Blueprints modulares de la API REST
-│   │   ├── __init__.py
+│   ├── routes/               # CAPA 1: Controladores HTTP (Route)
 │   │   ├── auth.py           # /auth (login, fcm-token)
 │   │   ├── obras.py          # /obras (listado, detalle, asientos)
 │   │   ├── asientos.py       # /asientos (registro transaccional, QR, respuestas)
 │   │   ├── incidencias.py    # /incidencias (actualización de estados)
 │   │   ├── supervision.py    # /supervision (KPIs contractuales)
 │   │   └── usuarios.py       # /usuarios (residentes activos)
+│   ├── services/             # CAPA 2: Lógica de Negocio, Validaciones y Transacciones (Service)
+│   │   ├── auth_service.py
+│   │   ├── obra_service.py
+│   │   ├── asiento_service.py
+│   │   ├── incidencia_service.py
+│   │   └── supervision_service.py
+│   ├── repositories/         # CAPA 3: Acceso a Datos y Consultas SQL (Repository)
+│   │   ├── usuario_repository.py
+│   │   ├── obra_repository.py
+│   │   ├── asiento_repository.py
+│   │   ├── incidencia_repository.py
+│   │   └── supervision_repository.py
+│   ├── models/               # CAPA 4: Entidades del Modelo de Datos (SQLAlchemy)
+│   │   ├── usuario.py, obra.py, frente.py, asiento.py, respuesta.py,
+│   │   └── incidencia.py, evidencia.py, historial.py, notificacion.py
 │   └── utils/
-│       ├── __init__.py
-│       └── decorators.py     # Decorador @role_required para control de acceso
+│       └── decorators.py     # Decorador @role_required para control de acceso JWT por rol
 ├── config.py                 # Configuración de entornos y URI de MySQL
 ├── run.py                    # Punto de entrada y comandos CLI (init-db, seed-db)
 ├── schema.sql                # Script DDL de MySQL para importación directa
 ├── requirements.txt          # Dependencias de Python
 ├── .env.example              # Plantilla de variables de entorno
 ├── .gitignore                # Archivos ignorados en Git (venv, .env, __pycache__)
-└── README.md                 # Guía del proyecto y flujo colaborativo de Git
+├── CONTRATO_API.md           # Estándar común acordado por el equipo
+└── README.md                 # Guía del proyecto y flujo en capas
 ```
+
+---
+
+## 🏛️ Arquitectura del Sistema (Route ➔ Service ➔ Repository ➔ Base de Datos)
+El sistema implementa una arquitectura desacoplada en 4 capas para garantizar mantenibilidad, testabilidad y separación estricta de responsabilidades:
+1. **Route (`app/routes/`):** Controladores que reciben la petición HTTP, parsean parámetros, gestionan el código de estado HTTP (`200`, `201`, `400`, `401`, `403`, `404`, `500`) y devuelven respuestas JSON uniformes.
+2. **Service (`app/services/`):** Capa de lógica de negocio y reglas contractuales. Aquí residen las validaciones de negocio, autorizaciones por rol y la coordinación de transacciones ACID (`commit` / `rollback`).
+3. **Repository (`app/repositories/`):** Capa de persistencia que aísla las consultas de base de datos (`SQLAlchemy` / consultas SQL), desacoplando la lógica de negocio del motor de base de datos.
+4. **Base de Datos / Models (`app/models/` y MySQL):** Entidades relacionales mapeadas y persistidas en MySQL Server.
 
 ---
 
