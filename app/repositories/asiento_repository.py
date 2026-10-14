@@ -130,3 +130,5 @@ class AsientoRepository:
         return HistorialCambio.query.filter_by(id_asiento=id_asiento).order_by(
             HistorialCambio.fecha.asc(), HistorialCambio.id.asc()
         ).all()
+
+

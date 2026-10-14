@@ -142,14 +142,14 @@ def registrar_incidencia(id):
 
     if request.is_json:
         data = request.get_json() or {}
-        tipo_incidencia = data.get('tipo_incidencia', '')
+        tipo_incidencia = data.get('tipo') or data.get('tipo_incidencia', '')
         descripcion = data.get('descripcion', '')
-        impacto_contractual = data.get('impacto_contractual', '')
+        impacto_contractual = data.get('impacto_contractual')
         foto_file = None
     else:
-        tipo_incidencia = request.form.get('tipo_incidencia', '')
+        tipo_incidencia = request.form.get('tipo') or request.form.get('tipo_incidencia', '')
         descripcion = request.form.get('descripcion', '')
-        impacto_contractual = request.form.get('impacto_contractual', '')
+        impacto_contractual = request.form.get('impacto_contractual')
         foto_file = request.files.get('evidencia_foto')
 
     upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
@@ -170,6 +170,9 @@ def registrar_incidencia(id):
     return jsonify({
         'success': True,
         'message': message,
+        'asiento': inc_data.get('asiento', id),
+        'tipo': inc_data.get('tipo'),
+        'estado': inc_data.get('estado', 'ABIERTA'),
         'incidencia': inc_data
     }), status_code
 
