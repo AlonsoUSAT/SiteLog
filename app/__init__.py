@@ -61,6 +61,17 @@ def create_app(config_name=None):
     app.register_blueprint(supervision_bp)
     app.register_blueprint(usuarios_bp)
 
+    # Ruta raíz informativa
+    @app.route('/', methods=['GET'])
+    def root():
+        return jsonify({
+            'success': True,
+            'app': 'SiteLog - Cuaderno de Obra Digital API REST',
+            'version': '2.0.0',
+            'estado': 'Servidor operativo',
+            'health_check': '/api/health'
+        }), 200
+
     # Endpoint de verificación de estado (Health Check)
     @app.route('/api/health', methods=['GET'])
     def health_check():
